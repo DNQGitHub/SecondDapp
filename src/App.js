@@ -1,112 +1,175 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
-import React from 'react';
-
+import React, {useState} from 'react';
+import {WalletConnectConfig} from './configs';
 import {
-	SafeAreaView,
-	ScrollView,
-	StatusBar,
 	StyleSheet,
-	Text,
-	useColorScheme,
+	SafeAreaView,
 	View,
+	Text,
+	TouchableOpacity,
+	Linking,
+	Platform,
 } from 'react-native';
+import {withWalletConnect} from '@walletconnect/react-native-dapp';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useMyWalletConnect} from './hooks';
+import WalletListModal from './modals/WalletListModal';
 
-import {
-	Colors,
-	DebugInstructions,
-	Header,
-	LearnMoreLinks,
-	ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export default withWalletConnect(
+	function App() {
+		const wcConnector = useMyWalletConnect(
+			async uri => {
+				setWcUri(uri);
 
-const Section = ({children, title}) => {
-	const isDarkMode = useColorScheme() === 'dark';
-	return (
-		<View style={styles.sectionContainer}>
-			<Text
-				style={[
-					styles.sectionTitle,
-					{
-						color: isDarkMode ? Colors.white : Colors.black,
-					},
-				]}>
-				{title}
-			</Text>
-			<Text
-				style={[
-					styles.sectionDescription,
-					{
-						color: isDarkMode ? Colors.light : Colors.dark,
-					},
-				]}>
-				{children}
-			</Text>
-		</View>
-	);
-};
+				if (Platform.OS === 'ios') {
+					setModalWalletListVisible(true);
+				} else {
+					await Linking.openURL(uri);
+				}
+			},
+			async () => {
+				setModalWalletListVisible(false);
+			},
+		);
+		const [wcUri, setWcUri] = useState(null);
+		const [modalWalletListVisible, setModalWalletListVisible] = useState(false);
 
-const App = () => {
-	const isDarkMode = useColorScheme() === 'dark';
+		const handleOnBtnConnectPressed = () => {
+			if (!wcConnector.connected) {
+				wcConnector.connect();
+			}
+		};
 
-	const backgroundStyle = {
-		backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-	};
+		const handleOnBtnDisconnectPressed = () => {
+			if (wcConnector.connected) {
+				wcConnector.killSession();
+			}
+		};
 
-	return (
-		<SafeAreaView style={backgroundStyle}>
-			<StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-			<ScrollView
-				contentInsetAdjustmentBehavior="automatic"
-				style={backgroundStyle}>
-				<Header />
-				<View
-					style={{
-						backgroundColor: isDarkMode ? Colors.black : Colors.white,
-					}}>
-					<Section title="Step One">
-						Edit <Text style={styles.highlight}>App.js</Text> to change this
-						screen and then come back to see your edits.
-					</Section>
-					<Section title="See Your Changes">
-						<ReloadInstructions />
-					</Section>
-					<Section title="Debug">
-						<DebugInstructions />
-					</Section>
-					<Section title="Learn More">
-						Read the docs to discover what to do next:
-					</Section>
-					<LearnMoreLinks />
+		const handleOnWalletItemPressed = async (index, item) => {
+			if (!wcUri) {
+				console.log('WallectConnect Uri is null');
+				return;
+			}
+
+			const {native, universal} = item.mobile;
+			const deepLink = `${
+				universal || (native && `${native}/`)
+			}/wc?uri=${wcUri}`;
+
+			console.log(deepLink);
+
+			Linking.openURL(deepLink);
+		};
+
+		return (
+			<SafeAreaView>
+				<View style={styles.body}>
+					<Text style={styles.title}>This is my second dapp</Text>
+
+					{wcConnector.connected && (
+						<View>
+							<Text style={styles.title}>
+								{wcConnector.session.peerMeta.name}
+							</Text>
+							{wcConnector.session.accounts.map((account, index) => (
+								<Text style={styles.title} key={index}>
+									{account}
+								</Text>
+							))}
+						</View>
+					)}
+
+					{!wcConnector.connected ? (
+						<TouchableOpacity
+							style={{...styles.button, ...styles.buttonConnect}}
+							onPress={handleOnBtnConnectPressed}>
+							<View>
+								<Text style={styles.buttonText}>Connect</Text>
+							</View>
+						</TouchableOpacity>
+					) : (
+						<View>
+							<TouchableOpacity
+								style={{...styles.button, ...styles.buttonLogout}}
+								onPress={handleOnBtnDisconnectPressed}>
+								<View>
+									<Text style={styles.buttonText}>Logout</Text>
+								</View>
+							</TouchableOpacity>
+						</View>
+					)}
+
+					<WalletListModal
+						onRequestClose={() => {
+							setModalWalletListVisible(false);
+						}}
+						visible={modalWalletListVisible}
+						onItemPressed={handleOnWalletItemPressed}
+					/>
 				</View>
-			</ScrollView>
-		</SafeAreaView>
-	);
-};
+			</SafeAreaView>
+		);
+	},
+	{
+		...WalletConnectConfig,
+		storageOptions: {
+			asyncStorage: AsyncStorage,
+		},
+	},
+);
 
 const styles = StyleSheet.create({
-	sectionContainer: {
-		marginTop: 32,
-		paddingHorizontal: 24,
+	body: {
+		width: '100%',
+		height: '100%',
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
-	sectionTitle: {
-		fontSize: 24,
-		fontWeight: '600',
+	title: {
+		marginBottom: 20,
+		fontSize: 20,
+		textAlign: 'center',
+		paddingLeft: 15,
+		paddingRight: 15,
 	},
-	sectionDescription: {
-		marginTop: 8,
-		fontSize: 18,
-		fontWeight: '400',
+	button: {
+		width: 150,
+		height: 50,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: '#f4f4f4',
+		borderRadius: 5,
+		elevation: 15,
 	},
-	highlight: {
-		fontWeight: '700',
+	buttonText: {
+		color: '#fff',
+		fontSize: 20,
+	},
+	buttonConnect: {
+		backgroundColor: '#3D85C6',
+		shadowColor: '#3D85C6',
+	},
+	buttonLogout: {
+		backgroundColor: '#e69138',
+		shadowColor: '#e69138',
+	},
+	modalWallets: {
+		width: '100%',
+		height: '100%',
+		backgroundColor: 'red',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	modalWalletsDialog: {
+		width: '80%',
+		height: '50%',
+		backgroundColor: 'blue',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	wallet: {
+		width: 300,
+		height: 50,
+		backgroundColor: '#fff',
 	},
 });
-
-export default App;

@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.15.14",
     "@walletconnect/react-native-dapp": "^1.7.0",
+    "axios": "^0.24.0",
     "node-libs-browser": "^2.2.1",
     "path-browserify": "0.0.0",
     "process": "^0.11.0",
