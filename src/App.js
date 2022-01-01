@@ -13,6 +13,8 @@ import {withWalletConnect} from '@walletconnect/react-native-dapp';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useMyWalletConnect} from './hooks';
 import WalletListModal from './modals/WalletListModal';
+import Logo from './assets/walletconnect-banner.svg';
+import DialogAndroid from 'react-native-dialogs/DialogAndroid';
 
 export default withWalletConnect(
 	function App() {
@@ -23,7 +25,17 @@ export default withWalletConnect(
 				if (Platform.OS === 'ios') {
 					setModalWalletListVisible(true);
 				} else {
-					await Linking.openURL(uri);
+					if (await Linking.canOpenURL(uri)) {
+						await Linking.openURL(uri);
+					} else {
+						DialogAndroid.alert(
+							'No wallet found',
+							`Find a wallet at <a href="https://ethereum.org/en/wallets/find-wallet">https://ethereum.org/en/wallets/find-wallet</a>`,
+							{
+								contentIsHtml: true,
+							},
+						);
+					}
 				}
 			},
 			async () => {
@@ -64,6 +76,8 @@ export default withWalletConnect(
 		return (
 			<SafeAreaView>
 				<View style={styles.body}>
+					<Logo width="80%" height="120" />
+
 					<Text style={styles.title}>This is my second dapp</Text>
 
 					{wcConnector.connected && (
@@ -125,6 +139,11 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		backgroundColor: '#fff',
+	},
+	logo: {
+		width: '80%',
+		height: 60,
+		resizeMode: 'contain',
 	},
 	title: {
 		marginBottom: 20,
