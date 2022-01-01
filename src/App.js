@@ -30,7 +30,7 @@ export default withWalletConnect(
 					} else {
 						DialogAndroid.alert(
 							'No wallet found',
-							`Find a wallet at <a href="https://ethereum.org/en/wallets/find-wallet">https://ethereum.org/en/wallets/find-wallet</a>`,
+							'Find a wallet at <a href="https://ethereum.org/en/wallets/find-wallet">https://ethereum.org/en/wallets/find-wallet</a>',
 							{
 								contentIsHtml: true,
 							},
