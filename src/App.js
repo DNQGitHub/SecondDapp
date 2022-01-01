@@ -8,6 +8,7 @@ import {
 	TouchableOpacity,
 	Linking,
 	Platform,
+	TextInput,
 } from 'react-native';
 import {withWalletConnect} from '@walletconnect/react-native-dapp';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -76,9 +77,18 @@ export default withWalletConnect(
 		return (
 			<SafeAreaView>
 				<View style={styles.body}>
-					<Logo width="80%" height="120" />
+					<Logo width="80%" height="80" />
 
-					<Text style={styles.title}>This is my second dapp</Text>
+					<Text style={styles.title}>v1.7.0</Text>
+
+					{wcUri && (
+						<TextInput
+							style={styles.title}
+							value={wcUri}
+							multiline={true}
+							selectTextOnFocus={true}
+						/>
+					)}
 
 					{wcConnector.connected && (
 						<View>
