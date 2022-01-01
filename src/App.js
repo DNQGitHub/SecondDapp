@@ -54,7 +54,7 @@ export default withWalletConnect(
 			const {native, universal} = item.mobile;
 			const deepLink = `${
 				universal || (native && `${native}/`)
-			}/wc?uri=${wcUri}`;
+			}/wc?uri=${encodeURIComponent(wcUri)}`;
 
 			console.log(deepLink);
 
@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
 		height: '100%',
 		alignItems: 'center',
 		justifyContent: 'center',
+		backgroundColor: '#fff',
 	},
 	title: {
 		marginBottom: 20,
